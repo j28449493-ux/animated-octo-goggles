@@ -9,7 +9,7 @@ try:  # pragma: no cover - optional dependency
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
     requests = None  # type: ignore[assignment]
 
-from config import SIMPLIFY_API_KEY, SIMPLIFY_BASE
+from src.config import SIMPLIFY_API_KEY, SIMPLIFY_BASE
 
 
 class SimplifyClient:

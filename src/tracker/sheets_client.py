@@ -17,8 +17,8 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
     InstalledAppFlow = None  # type: ignore[assignment]
     Request = None  # type: ignore[assignment]
 
-from config import SPREADSHEET_ID
-from tracker.schema import COLUMNS
+from src.config import SPREADSHEET_ID
+from src.tracker.schema import COLUMNS
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SHEET_NAME = "Internships"

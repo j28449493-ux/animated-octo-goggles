@@ -2,36 +2,93 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Iterable, List, Tuple
 
 try:  # pragma: no cover - optional dependency
     from rich import print as rich_print
+    from rich.logging import RichHandler
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
     def rich_print(*args: object, **kwargs: object) -> None:
         """Fallback printer when ``rich`` is not installed."""
 
         print(*args, **kwargs)
+    
+    RichHandler = None  # type: ignore[assignment]
 
-from config import CALENDAR_ID, RSS_FEEDS
-from generator.cover_letter import cover_letter_draft
-from generator.llm import LLM
-from generator.resume_tailor import tailor_resume_bullets
-from reminders.calendar_client import Calendar
-from sources.rss_client import parse_feeds
-from sources.simplify_client import SimplifyClient
-from tracker.sheets_client import SheetsTracker
+from src.config import CALENDAR_ID, RSS_FEEDS
+from src.generator.cover_letter import cover_letter_draft
+from src.generator.llm import LLM
+from src.generator.resume_tailor import tailor_resume_bullets
+from src.reminders.calendar_client import Calendar
+from src.sources.rss_client import parse_feeds
+from src.sources.simplify_client import SimplifyClient
+from src.tracker.sheets_client import SheetsTracker
+
+
+def _setup_logging() -> None:
+    """Configure logging with Rich handler if available, otherwise use basic config."""
+    
+    # Configure root logger
+    log_level = logging.INFO
+    log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    
+    if RichHandler:
+        # Use Rich handler for better formatting
+        logging.basicConfig(
+            level=log_level,
+            format="%(message)s",
+            datefmt="[%X]",
+            handlers=[RichHandler(rich_tracebacks=True)]
+        )
+    else:
+        # Fallback to basic logging
+        logging.basicConfig(
+            level=log_level,
+            format=log_format,
+            datefmt="%Y-%m-%d %H:%M:%S"
+        )
+    
+    # Set specific logger levels
+    logging.getLogger("sources.rss_client").setLevel(logging.INFO)
+    logging.getLogger("tracker.sheets_client").setLevel(logging.INFO)
+
+
+# Initialize logging
+_setup_logging()
+logger = logging.getLogger(__name__)
 
 
 def fetch_jobs(query: str = "software engineering intern") -> List[dict]:
     """Collect internship listings from configured sources."""
 
+    logger.info(f"Starting job fetch with query: '{query}'")
     jobs = []
+    
+    # Simplify client (currently commented out)
     # try:
-    #     jobs.extend(SimplifyClient().search(query=query))
+    #     logger.info("Fetching jobs from Simplify...")
+    #     simplify_jobs = SimplifyClient().search(query=query)
+    #     jobs.extend(simplify_jobs)
+    #     logger.info(f"Found {len(simplify_jobs)} jobs from Simplify")
     # except Exception as exc:  # pragma: no cover - network errors vary
+    #     logger.warning(f"Simplify search failed: {exc}")
     #     rich_print(f"[yellow]Simplify search failed:[/yellow] {exc}")
+    
+    # RSS feeds
     if RSS_FEEDS:
-        jobs.extend(parse_feeds(RSS_FEEDS))
+        logger.info(f"Processing {len(RSS_FEEDS)} RSS feeds...")
+        try:
+            rss_jobs = parse_feeds(RSS_FEEDS)
+            jobs.extend(rss_jobs)
+            logger.info(f"Successfully collected {len(rss_jobs)} jobs from RSS feeds")
+        except Exception as exc:
+            logger.error(f"RSS feed processing failed: {exc}")
+            rich_print(f"[red]RSS feed processing failed:[/red] {exc}")
+    else:
+        logger.info("No RSS feeds configured")
+    
+    logger.info(f"Total jobs collected: {len(jobs)}")
     return jobs
 
 
