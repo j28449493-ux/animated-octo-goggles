@@ -1,0 +1,12 @@
+python-dotenv
+requests
+feedparser
+pydantic
+pandas
+google-api-python-client
+google-auth
+google-auth-oauthlib
+python-dateutil
+rich
+tqdm
+beautifulsoup4
