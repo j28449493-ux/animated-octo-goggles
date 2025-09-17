@@ -25,11 +25,11 @@ from tracker.sheets_client import SheetsTracker
 def fetch_jobs(query: str = "software engineering intern") -> List[dict]:
     """Collect internship listings from configured sources."""
 
-    jobs: List[dict] = []
-    try:
-        jobs.extend(SimplifyClient().search(query=query))
-    except Exception as exc:  # pragma: no cover - network errors vary
-        rich_print(f"[yellow]Simplify search failed:[/yellow] {exc}")
+    jobs = []
+    # try:
+    #     jobs.extend(SimplifyClient().search(query=query))
+    # except Exception as exc:  # pragma: no cover - network errors vary
+    #     rich_print(f"[yellow]Simplify search failed:[/yellow] {exc}")
     if RSS_FEEDS:
         jobs.extend(parse_feeds(RSS_FEEDS))
     return jobs
